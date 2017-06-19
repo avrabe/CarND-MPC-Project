@@ -1,4 +1,7 @@
 # CarND-Controls-MPC
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/bfd8d52eb2b5468d84e01c01a1a783c6)](https://www.codacy.com/app/avrabe/CarND-MPC-Project?utm_source=github.com&utm_medium=referral&utm_content=avrabe/CarND-MPC-Project&utm_campaign=badger)
+
 Self-Driving Car Engineer Nanodegree Program
 
 ---
