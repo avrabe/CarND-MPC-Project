@@ -20,7 +20,7 @@ before_install:
       - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 60 --slave /usr/bin/g++ g++ /usr/bin/g++-6
       - sudo sh -c "(cd $TRAVIS_BUILD_DIR && git clone https://github.com/libuv/libuv.git && cd libuv && git checkout v1.12.0 && sh autogen.sh && ./configure && make && make install && cd .. && rm -rf libuv)"
       - sudo sh -c "(cd $TRAVIS_BUILD_DIR && sh ./install-ubuntu.sh )"
-      - sudo sh -c "(cd $TRAVIS_BUILD_DIR && curl -o Ipopt-3.12.8.tgz https://www.coin-or.org/download/source/Ipopt/Ipopt-3.12.8.tgz && tar xvjf Ipopt-3.12.8.tgz && sh ./install_ipopt.sh && rm -rf Ipopt-3.12.8* )
+      - sudo sh -c "(cd $TRAVIS_BUILD_DIR && curl -o Ipopt-3.12.8.tgz https://www.coin-or.org/download/source/Ipopt/Ipopt-3.12.8.tgz && tar xvizf Ipopt-3.12.8.tgz && sh ./install_ipopt.sh Ipopt-3.12.8 && rm -rf Ipopt-3.12.8* )"
       - sudo sh -c "(cd $TRAVIS_BUILD_DIR && git clone https://github.com/coin-or/CppAD.git cppad && cd cppad && git checkout 20170000.7 && mkdir build && cd build && cmake .. && make && make install && cd ../.. && rm -rf cppad)"
 addons:
   coverity_scan:
