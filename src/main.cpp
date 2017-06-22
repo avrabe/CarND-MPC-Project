@@ -89,6 +89,9 @@ int main() {
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
 
+            double dt = 0.1;
+            px += v * cos(psi) * dt;
+            py += v * sin(psi) * dt;
 
             for (uint32_t i = 0; i < ptsx.size(); i++) {
                 double shift_x = ptsx[i] - px;
@@ -152,7 +155,7 @@ int main() {
             vector<double> next_x_vals;
             vector<double> next_y_vals;
 
-            for (uint32_t i = 0; i < 40; i++) {
+            for (uint32_t i = 0; i < 80; i = i + 2) {
                 next_x_vals.push_back((double) i);
                 next_y_vals.push_back(polyeval(coeffs, i));
             }
