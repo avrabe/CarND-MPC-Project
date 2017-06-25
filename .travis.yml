@@ -4,6 +4,7 @@ language:
   - cpp
 compiler:
   - gcc
+cache: ccache
 
 before_install:
       - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
@@ -33,7 +34,7 @@ script:
   - cd build
   - cmake ..
   - build-wrapper-linux-x86-64 --out-dir bw-output make clean all
-  - sonar-scanner
+  - sonar-scanner -Dproject.settings=$TRAVIS_BUILD_DIR/sonar-project.properties
 cache:
   directories:
     - '$HOME/.sonar/cache'  
