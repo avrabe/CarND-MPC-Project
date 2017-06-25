@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
 
     int opt;
 
-    while ((opt = getopt(argc, argv, "c:e:v:d:a:i:j:t")) != EOF) {
+    while ((opt = getopt(argc, argv, "c:e:v:d:a:i:j:r:t:")) != EOF) {
         switch (opt) {
             case 'c':
                 params.factor_cte = atoi(optarg);
@@ -97,6 +97,9 @@ int main(int argc, char **argv) {
                 break;
             case 'j':
                 params.factor_a_delta = atoi(optarg);
+                break;
+            case 'r':
+                params.ref_v = atof(optarg);
                 break;
             case 't':
                 time_s = atoi(optarg);

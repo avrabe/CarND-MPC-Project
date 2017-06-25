@@ -6,14 +6,16 @@
 
 class Paramaters {
 public:
-
+    //-c 1000 -e 1000 -v 10 -d 10000 -a 1 -i 100  -j 1
     uint32_t factor_cte = 1000;
-    uint32_t factor_epsi = 100;
-    uint32_t factor_v = 1;
-    uint32_t factor_delta = 1000;
+    uint32_t factor_epsi = 1000;
+    uint32_t factor_v = 10;
+    uint32_t factor_delta = 10000;
     uint32_t factor_a = 1;
-    uint32_t factor_delta_delta = 50;
+    uint32_t factor_delta_delta = 100;
     uint32_t factor_a_delta = 1;
+
+    double ref_v = 100;
 
     Paramaters();
 
