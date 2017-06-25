@@ -5,12 +5,6 @@ language:
 compiler:
   - gcc
 
-env:
-  global:
-   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-   #   via the "travis encrypt" command using the project repo's public key
-   - secure: "HrJ3XcDdblwRTIgvCD932Dpvc9+3jO/G8YnoYPCf3USz5z3HpyZ18eAo8rckdrA5aGKCWzOr1RkjinT7Y6KVOIttqi4Z9cgThusMKkjyZQGW+xXByRYZeb5b/QNNC7v/mdGsnQuIjYvlwrL7QmSnlU0iJ3QX1yQOQc/nY/hMAcD5H6+6VAu/ZY2pq1zrs7tPr2g/2QpdoCWb/9x2Egefw5S3IWa5ZUlIth/QMXKRDw7jmWZxzvX5ScMl6JdnnyZHDchVhtozvhDUGlXSUYp96qG2JemDJT05TW8h6Vju3dYMkjFV6Xvno0FLINOFawZ9aA817/hvWPpmZOnV8+DDJtrnMcW9eByvTGo3Kl6M+Yt1B3AAEnRLxijZYuctDG7pxcgb0WbI60/QBN4Lt/AxH14cJKgosiytCKXJAovCfNDhYhGbHaNT/tvPFSvP22zwDshYwQO9tV3bWEr0PEtcztwjgbTSi2jXXzatvjAcgRPujf1dHOl4Xu5FkebKLFRDNYn0KjHao3+cjwGsAepjKnvpJm5zcVMpXkcbtKYsJ3l2YNCbaUCoiO8mSEi1I4BP4CjdxAgZ0x+OdtdRry6l86yg53nP8j5ooUyXp9IlkMDdTczINBBX1ShoDmcEll38ufCsuY2G45ufJZbPOLulGsFMxQGKV/ZWfQ5OVCT+rKg="
-
 before_install:
       - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
       - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
@@ -23,15 +17,10 @@ before_install:
       - sudo sh -c "(cd $TRAVIS_BUILD_DIR && curl -o Ipopt-3.12.8.tgz https://www.coin-or.org/download/source/Ipopt/Ipopt-3.12.8.tgz && tar xvizf Ipopt-3.12.8.tgz && sh ./install_ipopt.sh Ipopt-3.12.8 && rm -rf Ipopt-3.12.8* )"
       - sudo sh -c "(cd $TRAVIS_BUILD_DIR && git clone https://github.com/coin-or/CppAD.git cppad && cd cppad && git checkout 20170000.7 && mkdir build && cd build && cmake .. && make && make install && cd ../.. && rm -rf cppad)"
 addons:
-  coverity_scan:
-    project:
-      name: "avrabe/CarND-Unscented-Kalman-Filter-Project"
-      description: "Build submitted via Travis CI"
-    notification_email: ralf_beier@me.com
-    build_command_prepend: "mkdir -p build && cd build && cmake .. && make clean "
-    build_command:   make
-    branch_pattern: coverity_scan
-
+  sonarqube:
+    organization: "avrabe-github"
+    token:
+        secure: "UW8pyDaKN2+w/ZMdcgTTyMtBn8R8HRplvLvlOyI9DRFWlBlbKsgOoFOax66tMTZHEpKqX0x7LWsHygyKCXn0f7UUt26RuLEPsEt1kozhWJbtDRhuRJXe7nF/88AxnycgOkmIZNZrmpdnjE5nRcdpv0KKn2VUTfAIwfbgbKKsoXGnCIF9tuHdoslZvFlTVStL6xUxbSkwfuGWsmFR4jDB4yjwVIZuR9T5SOlCFbqj4MoyXcqufEdVc8GWdIT7oVEb+K6ob677Y4iAZrHT9GYyp/J7GygtZ8RKD9izLhXTm0yd2EttICrfyNxK4z8ON8O4/Zjn6Hl6OR17rqa4gezfxSexwbCYM8f8VH/3Hb+18aqAnWQxWbWAA3ttC6xtdkuyvMQ8h2dgN38r8nmDuKrfOhoTtZwsFHkHsDcVxKXvWMffwtH3VMQMH1csk9Nry2Gl/xBsGP/Ul2DlNIcfXmFqM3quZueosdrH+esf2pSLU7g/CWn9kJNLn1EGbKmxIvGc/bAPBqTW0eXUef7JM8zBCpSJwnQZGijA1Ey2iuJGn+e8H285twnd7bauVwaZXDQsxOM+7ZsKO72hJDbfgONe/hhyuNsz2Xyh2PEsLE8ES7WPv3aZrmjGUKpzGk1A1DD2xSVC/3fnZP77pCdqNE3H3IDx8xh5Ez/F5JV8Rjz7YJY="
 script:
   #- sudo ln -s /usr/bin/gcc-6 /usr/local/bin/gcc
   #- sudo ln -s /usr/bin/g++-6 /usr/local/bin/g++
@@ -42,5 +31,8 @@ script:
   # Run your build commands next
   - mkdir -p build
   - cd build
-  - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then cmake .. -G "Unix Makefiles" ; fi
-  - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then make ; fi
+  - build-wrapper-linux-x86-64 --out-dir bw-output make clean all
+  - sonar-scanner
+cache:
+  directories:
+    - '$HOME/.sonar/cache'  
