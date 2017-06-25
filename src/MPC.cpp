@@ -277,7 +277,7 @@ std::vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs, Pa
 
     std::vector<double> ret;
 
-    if (not ok) {
+    if (!ok) {
         std::cout << "Solution status is not ok! " << std::endl;
         std::cout << "Trigger safe state (Keep initial steering and brake)! " << std::endl;
         ret.push_back(psi);

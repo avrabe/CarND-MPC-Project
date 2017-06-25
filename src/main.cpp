@@ -104,10 +104,7 @@ int main(int argc, char **argv) {
             case 't':
                 time_s = atoi(optarg);
                 break;
-            case '?':
-                fprintf(stderr, "usuage is \n -a : for enabling a \n -b : for enabling b \n -c: <value> ");
             default:
-                std::cout << std::endl;
                 abort();
         }
     }
@@ -208,7 +205,7 @@ int main(int argc, char **argv) {
                         double x = (double) i;
                         double y = polyeval(coeffs, i);
                         if (x >= 0 && count < 10) {
-                            curve = std::max(curve, abs(y));
+                            curve = std::max(curve, std::fabs(y));
                             count++;
                         }
                         next_x_vals.push_back(x);
