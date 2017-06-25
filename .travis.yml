@@ -33,7 +33,7 @@ script:
   - mkdir -p build
   - cd build
   - cmake ..
-  - build-wrapper-linux-x86-64 --out-dir bw-output make clean all
+  - build-wrapper-linux-x86-64 --out-dir ../bw-output make clean all
   - sonar-scanner -Dproject.settings=$TRAVIS_BUILD_DIR/sonar-project.properties
 cache:
   directories:
