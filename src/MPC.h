@@ -15,7 +15,7 @@ public:
     uint32_t factor_delta_delta = 100;
     uint32_t factor_a_delta = 1;
 
-    double ref_v = 50;
+    double ref_v = 40;
     double factor_ref_v = 1;
 // Lf was tuned until the the radius formed by the simulating the model
 // presented in the classroom matched the previous radius.

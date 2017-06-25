@@ -186,7 +186,12 @@ int main(int argc, char **argv) {
                     */
 
                     Eigen::VectorXd state(6);
-                    state << 0, 0, 0, v, cte, epsi;
+                    // MiSRA does not like comma operators.
+                    state.fill(0);
+                    state(3) = v;
+                    state(4) = cte;
+                    state(5) = epsi;
+                    // state << 0, 0, 0, v, cte, epsi;
 
                     //Display the waypoints/reference line
                     std::vector<double> next_x_vals;

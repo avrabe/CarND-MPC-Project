@@ -4,7 +4,14 @@
 
 using CppAD::AD;
 
-// TODO: Set the timestep length and duration
+// DONE: Set the timestep length and duration
+/*
+ *  For the simulation it seems to be sufficient to predict about 1 second into the future.
+ *  Using less then 10 steps caused the solver to provide too rough predictions while more steps
+ *  resulted often in strange predictions (I guess it is caused by the cpu or other limits reached).
+ *
+ */
+
 uint32_t N = 10;
 double dt = 0.1;
 
@@ -157,13 +164,13 @@ std::vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs, Pa
     typedef CPPAD_TESTVECTOR(
     double) Dvector;
 
-    // TODO: Set the number of model variables (includes both states and inputs).
+    // DONE: Set the number of model variables (includes both states and inputs).
     // For example: If the state is a 4 element vector, the actuators is a 2
     // element vector and there are 10 timesteps. The number of variables is:
     //
     // 4 * 10 + 2 * 9
     uint32_t n_vars = 6 * N + 2 * (N - 1);
-    // TODO: Set the number of constraints
+    // DONE: Set the number of constraints
     uint32_t n_constraints = 6 * N;
 
     // Initial value of the independent variables.
@@ -188,7 +195,7 @@ std::vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs, Pa
 
     Dvector vars_lowerbound(n_vars);
     Dvector vars_upperbound(n_vars);
-    // TODO: Set lower and upper limits for variables.
+    // DONE: Set lower and upper limits for variables.
 
     // Lower and upper limits for the constraints
     // Should be 0 besides initial state.
@@ -273,7 +280,7 @@ std::vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs, Pa
     auto cost = solution.obj_value;
     std::cout << "Cost " << cost << std::endl;
 
-    // TODO: Return the first actuator values. The variables can be accessed with
+    // DONE: Return the first actuator values. The variables can be accessed with
     // `solution.x[i]`.
     //
     // {...} is shorthand for creating a vector, so auto x1 = {1.0,2.0}
