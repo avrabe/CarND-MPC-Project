@@ -37,12 +37,22 @@ size_t delta_start = epsi_start + N;
 size_t a_start = delta_start + N - 1;
 
 
+Paramaters::Paramaters() {
+    // intentionally empty
+}
+
+Paramaters::~Paramaters() {
+    // intentionally empty
+}
+
+
 class FG_eval {
 public:
     // Fitted polynomial coefficients
     Eigen::VectorXd coeffs;
+    Paramaters params;
 
-    explicit FG_eval(Eigen::VectorXd coeffs) : coeffs(coeffs) {}
+    explicit FG_eval(Eigen::VectorXd coeffs, Paramaters params) : coeffs(coeffs), params(params) {}
 
     typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
 
@@ -53,34 +63,26 @@ public:
         // the Solver function below.
         fg[0] = 0;
 
-        uint32_t factor_cte = 1000;
-        uint32_t factor_epsi = 100;
-        uint32_t factor_v = 1;
-        uint32_t factor_delta = 1000;
-        uint32_t factor_a = 1;
-        uint32_t factor_delta_delta = 50;
-        uint32_t factor_a_delta = 1;
-
         // Reference State Cost
         // TODO: Define the cost related the reference state and
         // any anything you think may be beneficial.
         // The part of the cost based on the reference state.
         for (uint32_t t = 0; t < N; t++) {
-            fg[0] += factor_cte * CppAD::pow(vars[cte_start + t], 2);
-            fg[0] += factor_epsi * CppAD::pow(vars[epsi_start + t], 2);
-            fg[0] += factor_v * CppAD::pow(vars[v_start + t] - ref_v, 2);
+            fg[0] += params.factor_cte * CppAD::pow(vars[cte_start + t], 2);
+            fg[0] += params.factor_epsi * CppAD::pow(vars[epsi_start + t], 2);
+            fg[0] += params.factor_v * CppAD::pow(vars[v_start + t] - ref_v, 2);
         }
 
         // Minimize the use of actuators.
         for (uint32_t t = 0; t < N - 1; t++) {
-            fg[0] += factor_delta * CppAD::pow(vars[delta_start + t], 2);
-            fg[0] += factor_a * CppAD::pow(vars[a_start + t], 2);
+            fg[0] += params.factor_delta * CppAD::pow(vars[delta_start + t], 2);
+            fg[0] += params.factor_a * CppAD::pow(vars[a_start + t], 2);
         }
 
         // Minimize the value gap between sequential actuations.
         for (uint32_t t = 0; t < N - 2; t++) {
-            fg[0] += factor_delta_delta * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
-            fg[0] += factor_a_delta * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+            fg[0] += params.factor_delta_delta * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
+            fg[0] += params.factor_a_delta * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
         }
         //
         // Setup Constraints
@@ -146,11 +148,15 @@ public:
 //
 // MPC class definition implementation.
 //
-MPC::MPC() {}
+MPC::MPC() {
+    // intentionally empty
+}
 
-MPC::~MPC() {}
+MPC::~MPC() {
+    // intentionally empty
+}
 
-std::vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
+std::vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs, Paramaters params) {
     bool ok = true;
     typedef CPPAD_TESTVECTOR(
     double) Dvector;
@@ -233,8 +239,10 @@ std::vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
         vars_upperbound[i] = 1.0;
     }
 
+
+
     // object that computes objective and constraints
-    FG_eval fg_eval(coeffs);
+    FG_eval fg_eval(coeffs, params);
 
     //
     // NOTE: You don't have to worry about these options

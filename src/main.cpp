@@ -64,8 +64,55 @@ Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals,
     return result;
 }
 
-int main() {
+typedef std::chrono::high_resolution_clock Time;
+typedef std::chrono::duration<float> fsec;
+auto t0 = Time::now();
+uint64_t time_s = 0;
+Paramaters params;
+
+int main(int argc, char **argv) {
     uWS::Hub h;
+
+    int opt;
+
+    while ((opt = getopt(argc, argv, "c:e:v:d:a:i:j:t")) != EOF) {
+        switch (opt) {
+            case 'c':
+                params.factor_cte = atoi(optarg);
+                break;
+            case 'e':
+                params.factor_epsi = atoi(optarg);
+                break;
+            case 'v':
+                params.factor_v = atoi(optarg);
+                break;
+            case 'd':
+                params.factor_delta = atoi(optarg);
+                break;
+            case 'a':
+                params.factor_a = atoi(optarg);
+                break;
+            case 'i':
+                params.factor_delta_delta = atoi(optarg);
+                break;
+            case 'j':
+                params.factor_a_delta = atoi(optarg);
+                break;
+            case 't':
+                time_s = atoi(optarg);
+                break;
+            case '?':
+                fprintf(stderr, "usuage is \n -a : for enabling a \n -b : for enabling b \n -c: <value> ");
+            default:
+                std::cout << std::endl;
+                abort();
+        }
+    }
+    if (time_s == 0) {
+        std::cout << "not timeboxed" << std::endl;
+    } else {
+        std::cout << "limit to " << time_s << " seconds." << std::endl;
+    }
 
     // MPC is initialized here!
     MPC mpc;
@@ -98,7 +145,7 @@ int main() {
                     double Lf = 2.67;
                     px += v * std::cos(psi) * dt;
                     py += v * std::sin(psi) * dt;
-                    psi -= v * steer_value / 2.67 * dt;
+                    psi -= v * steer_value / Lf * dt;
                     v += throttle_value * dt;
 
 
@@ -132,7 +179,7 @@ int main() {
                     Eigen::VectorXd state(6);
                     state << 0, 0, 0, v, cte, epsi;
 
-                    std::vector<double> ret = mpc.Solve(state, coeffs);
+                    std::vector<double> ret = mpc.Solve(state, coeffs, params);
                     steer_value = ret[0];
                     throttle_value = ret[1];
 
@@ -187,6 +234,13 @@ int main() {
                     // SUBMITTING.
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                     ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+
+                    auto t1 = Time::now();
+                    fsec fs = t1 - t0;
+                    std::cout << fs.count() << "s\n";
+                    if (time_s > 0 && fs.count() > time_s) {
+                        exit(0);
+                    }
                 }
             } else {
                 // Manual driving
