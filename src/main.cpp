@@ -191,7 +191,6 @@ int main(int argc, char **argv) {
                     state(3) = v;
                     state(4) = cte;
                     state(5) = epsi;
-                    // state << 0, 0, 0, v, cte, epsi;
 
                     //Display the waypoints/reference line
                     std::vector<double> next_x_vals;
@@ -253,8 +252,8 @@ int main(int argc, char **argv) {
                     //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
                     // the points in the simulator are connected by a Yellow line
 
-                    msgJson["next_x"] = next_x_vals; //next_x_vals;
-                    msgJson["next_y"] = next_y_vals; //next_y_vals;
+                    msgJson["next_x"] = next_x_vals;
+                    msgJson["next_y"] = next_y_vals;
 
 
                     auto msg = "42[\"steer\"," + msgJson.dump() + "]";

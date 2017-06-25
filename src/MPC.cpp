@@ -60,14 +60,14 @@ public:
     typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
 
     void operator()(ADvector &fg, const ADvector &vars) {
-        // TODO: implement MPC
+        // DONE: implement MPC
         // `fg` a vector of the cost constraints, `vars` is a vector of variable values (state & actuators)
         // NOTE: You'll probably go back and forth between this function and
         // the Solver function below.
         fg[0] = 0;
 
         // Reference State Cost
-        // TODO: Define the cost related the reference state and
+        // DONE: Define the cost related the reference state and
         // any anything you think may be beneficial.
         // The part of the cost based on the reference state.
         for (uint32_t t = 0; t < N; t++) {
@@ -123,8 +123,7 @@ public:
             AD<double> f0 = coeffs[0] + coeffs[1] * x0 + coeffs[2] * x0 * x0 + coeffs[3] * x0 * x0 * x0;
             AD<double> psides0 = CppAD::atan(3 * coeffs[3] * x0 * x0 + 2 * coeffs[2] * x0 + coeffs[1]);
 
-            // TODO: Check why I can't use vars[cte_start +t]
-            AD<double> cte0 = f0 - y0; //;vars[cte_start + t];
+            AD<double> cte0 = f0 - y0;
             AD<double> cte1 = vars[cte_start + t + 1];
 
             AD<double> epsi0 = vars[epsi_start + t];
@@ -137,7 +136,7 @@ public:
             // This is also CppAD can compute derivatives and pass
             // these to the solver.
 
-            // TODO: Setup the rest of the model constraints
+            // DONE: Setup the rest of the model constraints
             fg[2 + x_start + t] = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
             fg[2 + y_start + t] = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
             fg[2 + psi_start + t] = psi1 - (psi0 + v0 / params.Lf * delta0 * dt);
@@ -276,19 +275,23 @@ std::vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs, Pa
     // Check some of the solution values
     ok &= solution.status == CppAD::ipopt::solve_result<Dvector>::success;
 
-    // Cost
-    auto cost = solution.obj_value;
-    std::cout << "Cost " << cost << std::endl;
+    std::vector<double> ret;
 
-    // DONE: Return the first actuator values. The variables can be accessed with
-    // `solution.x[i]`.
-    //
-    // {...} is shorthand for creating a vector, so auto x1 = {1.0,2.0}
-    // creates a 2 element double vector.
-    std::vector<double> ret = {solution.x[delta_start], solution.x[a_start]};
-    for (uint32_t i = 1; i < N; i++) {
-        ret.push_back(solution.x[x_start + i]);
-        ret.push_back(solution.x[y_start + i]);
+    if (not ok) {
+        std::cout << "Solution status is not ok! " << std::endl;
+        std::cout << "Trigger safe state (Keep initial steering and brake)! " << std::endl;
+        ret.push_back(psi);
+        ret.push_back(-1.0);
+    } else {
+        ret.push_back(solution.x[delta_start]);
+        ret.push_back(solution.x[a_start]);
+        auto cost = solution.obj_value;
+        std::cout << "Cost " << cost << std::endl;
+
+        for (uint32_t i = 1; i < N; i++) {
+            ret.push_back(solution.x[x_start + i]);
+            ret.push_back(solution.x[y_start + i]);
+        }
     }
     return ret;
 }
