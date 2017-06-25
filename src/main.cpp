@@ -19,13 +19,13 @@ double rad2deg(double x) { return x * 180 / pi(); }
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
 // else the empty string "" will be returned.
-string hasData(string s) {
+std::string hasData(std::string s) {
     auto found_null = s.find("null");
     auto b1 = s.find_first_of("[");
     auto b2 = s.rfind("}]");
-    if (found_null != string::npos) {
+    if (found_null != std::string::npos) {
         return "";
-    } else if (b1 != string::npos && b2 != string::npos) {
+    } else if (b1 != std::string::npos && b2 != std::string::npos) {
         return s.substr(b1, b2 - b1 + 2);
     }
     return "";
@@ -75,17 +75,17 @@ int main() {
         // "42" at the start of the message means there's a websocket message event.
         // The 4 signifies a websocket message
         // The 2 signifies a websocket event
-        string sdata = string(data).substr(0, length);
-        cout << sdata << endl;
+        std::string sdata = std::string(data).substr(0, length);
+        std::cout << sdata << std::endl;
         if (sdata.size() > 2 && sdata[0] == '4' && sdata[1] == '2') {
-            string s = hasData(sdata);
+            std::string s = hasData(sdata);
             if (s != "") {
                 auto j = json::parse(s);
-                string event = j[0].get<string>();
+                std::string event = j[0].get<std::string>();
                 if (event == "telemetry") {
                     // j[1] is the data JSON object
-                    vector<double> ptsx = j[1]["ptsx"];
-                    vector<double> ptsy = j[1]["ptsy"];
+                    std::vector<double> ptsx = j[1]["ptsx"];
+                    std::vector<double> ptsy = j[1]["ptsy"];
                     double px = j[1]["x"];
                     double py = j[1]["y"];
                     double psi = j[1]["psi"];
@@ -94,8 +94,8 @@ int main() {
 
 
                     double dt = 0.1;
-                    px += v * cos(psi) * dt;
-                    py += v * sin(psi) * dt;
+                    //px += v * cos(psi) * dt;
+                    //py += v * sin(psi) * dt;
 
                     for (uint32_t i = 0; i < ptsx.size(); i++) {
                         double shift_x = ptsx[i] - px;
@@ -127,19 +127,20 @@ int main() {
                     Eigen::VectorXd state(6);
                     state << 0, 0, 0, v, cte, epsi;
 
-                    vector<double> ret = mpc.Solve(state, coeffs);
+                    std::vector<double> ret = mpc.Solve(state, coeffs);
                     steer_value = ret[0];
                     throttle_value = ret[1];
 
                     json msgJson;
+                    double Lf = 2.67;
                     // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
                     // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
-                    msgJson["steering_angle"] = steer_value / 0.46332 * -1;
+                    msgJson["steering_angle"] = -1 * steer_value / (0.46332 * Lf);
                     msgJson["throttle"] = throttle_value;
 
                     //Display the MPC predicted trajectory
-                    vector<double> mpc_x_vals;
-                    vector<double> mpc_y_vals;
+                    std::vector<double> mpc_x_vals;
+                    std::vector<double> mpc_y_vals;
                     for (uint32_t i = 2; i < ret.size(); i++) {
                         if (i % 2) {
                             mpc_y_vals.push_back(ret[i]);
@@ -155,8 +156,8 @@ int main() {
                     msgJson["mpc_y"] = mpc_y_vals;
 
                     //Display the waypoints/reference line
-                    vector<double> next_x_vals;
-                    vector<double> next_y_vals;
+                    std::vector<double> next_x_vals;
+                    std::vector<double> next_y_vals;
 
                     for (uint32_t i = 0; i < 80; i = i + 2) {
                         next_x_vals.push_back((double) i);
@@ -180,7 +181,7 @@ int main() {
                     //
                     // NOTE: REMEMBER TO SET THIS TO 100 MILLISECONDS BEFORE
                     // SUBMITTING.
-                    this_thread::sleep_for(chrono::milliseconds(100));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
                     ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
                 }
             } else {

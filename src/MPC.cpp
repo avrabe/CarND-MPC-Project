@@ -140,7 +140,7 @@ MPC::MPC() {}
 
 MPC::~MPC() {}
 
-vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
+std::vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
     bool ok = true;
     typedef CPPAD_TESTVECTOR(
     double) Dvector;
@@ -212,8 +212,8 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
     // degrees (values in radians).
     // NOTE: Feel free to change this to something else.
     for (uint32_t i = delta_start; i < a_start; i++) {
-        vars_lowerbound[i] = -0.436332;
-        vars_upperbound[i] = 0.436332;
+        vars_lowerbound[i] = -0.436332 * Lf;
+        vars_upperbound[i] = 0.436332 * Lf;
     }
 
     // Acceleration/decceleration upper and lower limits.
@@ -264,7 +264,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
     //
     // {...} is shorthand for creating a vector, so auto x1 = {1.0,2.0}
     // creates a 2 element double vector.
-    vector<double> ret = {solution.x[delta_start], solution.x[a_start]};
+    std::vector<double> ret = {solution.x[delta_start], solution.x[a_start]};
     for (uint32_t i = 1; i < N; i++) {
         ret.push_back(solution.x[x_start + i]);
         ret.push_back(solution.x[y_start + i]);
