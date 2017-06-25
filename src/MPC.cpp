@@ -6,7 +6,7 @@ using CppAD::AD;
 
 // TODO: Set the timestep length and duration
 uint32_t N = 10;
-double dt = 0.2;
+double dt = 0.1;
 
 // This value assumes the model presented in the classroom is used.
 //
@@ -42,7 +42,7 @@ public:
     // Fitted polynomial coefficients
     Eigen::VectorXd coeffs;
 
-    FG_eval(Eigen::VectorXd coeffs) { this->coeffs = coeffs; }
+    explicit FG_eval(Eigen::VectorXd coeffs) : coeffs(coeffs) {}
 
     typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
 
@@ -53,26 +53,34 @@ public:
         // the Solver function below.
         fg[0] = 0;
 
+        uint32_t factor_cte = 1000;
+        uint32_t factor_epsi = 100;
+        uint32_t factor_v = 1;
+        uint32_t factor_delta = 1000;
+        uint32_t factor_a = 1;
+        uint32_t factor_delta_delta = 50;
+        uint32_t factor_a_delta = 1;
+
         // Reference State Cost
         // TODO: Define the cost related the reference state and
         // any anything you think may be beneficial.
         // The part of the cost based on the reference state.
         for (uint32_t t = 0; t < N; t++) {
-            fg[0] += 2000 * CppAD::pow(vars[cte_start + t], 2);
-            fg[0] += 2000 * CppAD::pow(vars[epsi_start + t], 2);
-            fg[0] += CppAD::pow(vars[v_start + t] - ref_v, 2);
+            fg[0] += factor_cte * CppAD::pow(vars[cte_start + t], 2);
+            fg[0] += factor_epsi * CppAD::pow(vars[epsi_start + t], 2);
+            fg[0] += factor_v * CppAD::pow(vars[v_start + t] - ref_v, 2);
         }
 
         // Minimize the use of actuators.
         for (uint32_t t = 0; t < N - 1; t++) {
-            fg[0] += 5 * CppAD::pow(vars[delta_start + t], 2);
-            fg[0] += 5 * CppAD::pow(vars[a_start + t], 2);
+            fg[0] += factor_delta * CppAD::pow(vars[delta_start + t], 2);
+            fg[0] += factor_a * CppAD::pow(vars[a_start + t], 2);
         }
 
         // Minimize the value gap between sequential actuations.
         for (uint32_t t = 0; t < N - 2; t++) {
-            fg[0] += 200 * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
-            fg[0] += 10 * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+            fg[0] += factor_delta_delta * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
+            fg[0] += factor_a_delta * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
         }
         //
         // Setup Constraints
@@ -107,14 +115,16 @@ public:
             AD<double> v1 = vars[v_start + t + 1];
             AD<double> a0 = vars[a_start + t];
 
-            AD<double> cte0 = vars[cte_start + t];
+            AD<double> f0 = coeffs[0] + coeffs[1] * x0 + coeffs[2] * x0 * x0 + coeffs[3] * x0 * x0 * x0;
+            AD<double> psides0 = CppAD::atan(3 * coeffs[3] * x0 * x0 + 2 * coeffs[2] * x0 + coeffs[1]);
+
+            // TODO: Check why I can't use vars[cte_start +t]
+            AD<double> cte0 = f0 - y0; //;vars[cte_start + t];
             AD<double> cte1 = vars[cte_start + t + 1];
 
             AD<double> epsi0 = vars[epsi_start + t];
             AD<double> epsi1 = vars[epsi_start + t + 1];
 
-            AD<double> f0 = coeffs[0] + coeffs[1] * x0 + coeffs[2] * x0 * x0 + coeffs[3] * x0 * x0 * x0;
-            AD<double> psides0 = CppAD::atan(3 * coeffs[3] * x0 * x0 + 2 * coeffs[2] * x0 + coeffs[1]);
             // Here's `x` to get you started.
             // The idea here is to constraint this value to be 0.
             //
@@ -127,7 +137,7 @@ public:
             fg[2 + y_start + t] = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
             fg[2 + psi_start + t] = psi1 - (psi0 + v0 / Lf * delta0 * dt);
             fg[2 + v_start + t] = v1 - (v0 + a0 * dt);
-            fg[2 + cte_start + t] = cte1 - ((f0 - y0) + (v0 * CppAD::sin(epsi0) * dt));
+            fg[2 + cte_start + t] = cte1 - (cte0 + (v0 * CppAD::sin(epsi0) * dt));
             fg[2 + epsi_start + t] = epsi1 - ((psi0 - psides0) - v0 * delta0 / Lf * dt);
         }
     }

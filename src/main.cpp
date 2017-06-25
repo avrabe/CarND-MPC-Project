@@ -91,11 +91,17 @@ int main() {
                     double psi = j[1]["psi"];
                     double v = j[1]["speed"];
                     double steer_value = j[1]["steering_angle"];
+                    double throttle_value = j[1]["throttle"];
 
 
                     double dt = 0.1;
-                    //px += v * cos(psi) * dt;
-                    //py += v * sin(psi) * dt;
+                    double Lf = 2.67;
+                    px += v * std::cos(psi) * dt;
+                    py += v * std::sin(psi) * dt;
+                    psi -= v * steer_value / 2.67 * dt;
+                    v += throttle_value * dt;
+
+
 
                     for (uint32_t i = 0; i < ptsx.size(); i++) {
                         double shift_x = ptsx[i] - px;
@@ -122,7 +128,6 @@ int main() {
                     * Both are in between [-1, 1].
                     *
                     */
-                    double throttle_value = 0.0;
 
                     Eigen::VectorXd state(6);
                     state << 0, 0, 0, v, cte, epsi;
@@ -132,10 +137,9 @@ int main() {
                     throttle_value = ret[1];
 
                     json msgJson;
-                    double Lf = 2.67;
                     // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
                     // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
-                    msgJson["steering_angle"] = -1 * steer_value / (0.46332 * Lf);
+                    msgJson["steering_angle"] = -1 * steer_value / 0.46332;
                     msgJson["throttle"] = throttle_value;
 
                     //Display the MPC predicted trajectory
