@@ -6,6 +6,8 @@
 Self-Driving Car Engineer Nanodegree Program
 
 ---
+<img src="drive.gif" /></br>
+---
 
 ## Dependencies
 
