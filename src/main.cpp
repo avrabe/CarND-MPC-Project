@@ -144,11 +144,17 @@ int main(int argc, char **argv) {
                     double throttle_value = j[1]["throttle"];
 
 
+                    /*
+                     * Take the current vehicle information and perform
+                     * a very simple prediction where the car will be
+                     * within the estimated latency for the algorithm.
+                     *
+                     * Use this as base to calculate the next steps.
+                     */
                     double dt = 0.1;
-                    double Lf = 2.67;
                     px += v * std::cos(psi) * dt;
                     py += v * std::sin(psi) * dt;
-                    psi -= v * steer_value / Lf * dt;
+                    psi -= v * steer_value / params.Lf * dt;
                     v += throttle_value * dt;
 
 
@@ -173,7 +179,7 @@ int main(int argc, char **argv) {
                     double epsi = -atan(coeffs[1]);
 
                     /*
-                    * TODO: Calculate steering angle and throttle using MPC.
+                    * DONE: Calculate steering angle and throttle using MPC.
                     *
                     * Both are in between [-1, 1].
                     *
@@ -181,6 +187,36 @@ int main(int argc, char **argv) {
 
                     Eigen::VectorXd state(6);
                     state << 0, 0, 0, v, cte, epsi;
+
+                    //Display the waypoints/reference line
+                    std::vector<double> next_x_vals;
+                    std::vector<double> next_y_vals;
+
+                    /*
+                     * Calculate the reference points based on the car position.
+                     * In addition perform a very basic test if a steep curve
+                     * is comming up and adjust the reference speed accordingly.
+                     *
+                     */
+                    double curve = 0;
+                    uint32_t count = 0;
+                    for (uint32_t i = 0; i < 80; i = i + 2) {
+                        double x = (double) i;
+                        double y = polyeval(coeffs, i);
+                        if (x >= 0 && count < 10) {
+                            curve = std::max(curve, abs(y));
+                            count++;
+                        }
+                        next_x_vals.push_back(x);
+                        next_y_vals.push_back(y);
+                    }
+                    if (curve < 2) {
+                        params.factor_ref_v = 2;
+                    } else {
+                        params.factor_ref_v = 1;
+                    }
+                    std::cout << "curve " << curve << std::endl;
+
 
                     std::vector<double> ret = mpc.Solve(state, coeffs, params);
                     steer_value = ret[0];
@@ -209,14 +245,6 @@ int main(int argc, char **argv) {
                     msgJson["mpc_x"] = mpc_x_vals;
                     msgJson["mpc_y"] = mpc_y_vals;
 
-                    //Display the waypoints/reference line
-                    std::vector<double> next_x_vals;
-                    std::vector<double> next_y_vals;
-
-                    for (uint32_t i = 0; i < 80; i = i + 2) {
-                        next_x_vals.push_back((double) i);
-                        next_y_vals.push_back(polyeval(coeffs, i));
-                    }
                     //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
                     // the points in the simulator are connected by a Yellow line
 

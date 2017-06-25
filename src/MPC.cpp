@@ -14,12 +14,6 @@ double dt = 0.1;
 // simulator around in a circle with a constant steering angle and velocity on a
 // flat terrain.
 //
-// Lf was tuned until the the radius formed by the simulating the model
-// presented in the classroom matched the previous radius.
-//
-// This is the length from front to CoG that has a similar radius.
-const double Lf = 2.67;
-
 
 // The solver takes all the state variables and actuator
 // variables in a singular vector. Thus, we should to establish
@@ -40,6 +34,11 @@ Paramaters::Paramaters() {
 
 Paramaters::~Paramaters() {
     // intentionally empty
+}
+
+
+double Paramaters::getV() {
+    return factor_ref_v * ref_v;
 }
 
 
@@ -67,7 +66,7 @@ public:
         for (uint32_t t = 0; t < N; t++) {
             fg[0] += params.factor_cte * CppAD::pow(vars[cte_start + t], 2);
             fg[0] += params.factor_epsi * CppAD::pow(vars[epsi_start + t], 2);
-            fg[0] += params.factor_v * CppAD::pow(vars[v_start + t] - params.ref_v, 2);
+            fg[0] += params.factor_v * CppAD::pow(vars[v_start + t] - params.getV(), 2);
         }
 
         // Minimize the use of actuators.
@@ -134,10 +133,10 @@ public:
             // TODO: Setup the rest of the model constraints
             fg[2 + x_start + t] = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
             fg[2 + y_start + t] = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
-            fg[2 + psi_start + t] = psi1 - (psi0 + v0 / Lf * delta0 * dt);
+            fg[2 + psi_start + t] = psi1 - (psi0 + v0 / params.Lf * delta0 * dt);
             fg[2 + v_start + t] = v1 - (v0 + a0 * dt);
             fg[2 + cte_start + t] = cte1 - (cte0 + (v0 * CppAD::sin(epsi0) * dt));
-            fg[2 + epsi_start + t] = epsi1 - ((psi0 - psides0) - v0 * delta0 / Lf * dt);
+            fg[2 + epsi_start + t] = epsi1 - ((psi0 - psides0) - v0 * delta0 / params.Lf * dt);
         }
     }
 };
@@ -225,8 +224,8 @@ std::vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs, Pa
     // degrees (values in radians).
     // NOTE: Feel free to change this to something else.
     for (uint32_t i = delta_start; i < a_start; i++) {
-        vars_lowerbound[i] = -0.436332 * Lf;
-        vars_upperbound[i] = 0.436332 * Lf;
+        vars_lowerbound[i] = -0.436332 * params.Lf;
+        vars_upperbound[i] = 0.436332 * params.Lf;
     }
 
     // Acceleration/decceleration upper and lower limits.
