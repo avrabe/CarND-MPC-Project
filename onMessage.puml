@@ -1,0 +1,15 @@
+@startuml
+(*)  --> "Compensate latency"
+--> "Transform global waypoints\nrelativ to\ncar position"
+--> "Fit waypoints into polynom of 3rd order"
+--> "Calculate cte and epsi"
+--> "Check for upcoming steep curve"
+If "curve is steep" then
+--> [Yes] "Reduce reference speed"
+--> "Solve MPC"
+else
+--> [No] "Use max reference speed"
+--> "Solve MPC"
+Endif
+-->(*)
+@enduml

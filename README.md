@@ -8,6 +8,48 @@ Self-Driving Car Engineer Nanodegree Program
 ---
 <img src="drive.gif" /></br>
 ---
+## Model documentation
+
+### Checklist
+- [x] Your code should compile.
+- [ ] The Model description (incl. state, actuators and update equations)
+- [ ] Timestep Length and Elapsed Duration (N & dt)
+- [x] Polynomial Fitting and MPC Preprocessing (show and describe)
+- [x] Model Predictive Control with Latency
+- [x] The vehicle must successfully drive a lap around the track.      
+
+### onMessage
+When receiving data from the simulator, below activities are run:
+![alt text](onMessage.png "onMessage")
+
+Based on the received car position, an estimated position will be calculated.
+It is assumed that the latency is 100ms and below formulas are used to get
+the estimated position, psi and v. For the speed, we estimate that based on the 
+throttle we can estimate the speed after 100ms.
+
+![px += v * std::cos(psi) * dt](https://latex.codecogs.com/gif.latex?px_t_&plus;_1&space;=&space;px_t&space;&plus;&space;v_t&space;*&space;\cos(psi_t)&space;*&space;dt)<br>
+![py += v * std::sin(psi) * dt](https://latex.codecogs.com/gif.latex?py_t_&plus;_1&space;=&space;py_t&space;&plus;&space;v_t&space;*&space;\sin(psi_t)&space;*&space;dt)<br>
+![psi -= v * steer_value / params.Lf * dt](https://latex.codecogs.com/gif.latex?psi_{t&plus;1}&space;=&space;psi_t&space;-&space;v_t&space;\frac{steervalue_t}{Lf}dt)<br>
+![v += throttle_value * dt](https://latex.codecogs.com/gif.latex?v_{t&plus;1}&space;=&space;v_t&space;&plus;throttlevalue_t*dt)<br>
+
+Using the predicted car position the received waypoints are converted from
+global coordinates to coordinates relative to the car position (with the car 
+position as (0,0)). Below formulas are used to convert:
+
+![ptsx[i] = (shift_x * cos(0 - psi) - shift_y * sin(0 - psi))](https://latex.codecogs.com/gif.latex?ptsx_i&space;=&space;(ptsx_i&space;-&space;px_{t&plus;1})&space;\cos(0&space;-&space;psi_{t&plus;1})&space;-&space;(ptsy_i&space;-&space;py_{t&plus;1})&space;\sin(0&space;-&space;psi))<br>
+![ptsy[i] = (shift_x * sin(0 - psi) + shift_y * cos(0 - psi))](https://latex.codecogs.com/gif.latex?ptsy_i&space;=&space;(ptsx_i&space;-&space;px_{t&plus;1})&space;\sin(0&space;-&space;psi_{t&plus;1})&space;&plus;&space;(ptsy_i&space;-&space;py_{t&plus;1})&space;\cos(0&space;-&space;psi))<br>
+
+The new waypoints are converted into a polynom 3rd order.
+The cross track error and the orientation error are calculated based on the polynom.
+ 
+Afterwards it is checked if the car will soon enter a steep curve and based
+ on the result the reference speed is set.
+ 
+ 
+Using the return values from the MPV solver, the new throttle and orientation is set and
+ the predicted waypoints are returned.
+
+### MPC solve 
 
 ## Dependencies
 
