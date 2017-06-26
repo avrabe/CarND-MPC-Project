@@ -13,7 +13,7 @@ Self-Driving Car Engineer Nanodegree Program
 ### Checklist
 - [x] Your code should compile.
 - [ ] The Model description (incl. state, actuators and update equations)
-- [ ] Timestep Length and Elapsed Duration (N & dt)
+- [X] Timestep Length and Elapsed Duration (N & dt)
 - [x] Polynomial Fitting and MPC Preprocessing (show and describe)
 - [x] Model Predictive Control with Latency
 - [x] The vehicle must successfully drive a lap around the track.      
@@ -50,6 +50,15 @@ Using the return values from the MPV solver, the new throttle and orientation is
  the predicted waypoints are returned.
 
 ### MPC solve 
+The model predictive control solver is based on a kinematic model and not on a dynamic model.
+N prediction with dt ms between each prediction are performed. The paremeters
+are chosen based on a trade-off between the predicted resolution and length of the prediction.
+Adding a larger N and small dt I could see a better model resolution but 
+at higher computational costs which could lead to worse predictions if the 
+calculations are stopped after the defined time. Setting the estimates too small,
+also did not work as the predictions did turn out not good enough. Finally I choose
+N with 10 and dt as 0.1 ms.
+
 
 ## Dependencies
 
