@@ -45,12 +45,12 @@ Afterwards it is checked if the car will soon enter a steep curve and based
  on the result the reference velocity is set.
  
  
-Using the return values from the MPV solver, the new throttle and orientation is set and
+Using the return values from the MPC solver, the new throttle and orientation is set and
  the predicted waypoints are returned.
 
 ### MPC solve 
 The model predictive control solver is based on a kinematic model. The model with the given bounds and constraints is handed over to an optimizer. The optimzer tries to find the best solution for the given N prediction steps with dt time in between. 
-If the optimizer returns with no error the first actuator values returned. In case of an error, the actual front wheel angle and a throttle of -1 is returned. This is to bring the car into  safe state. The car model can be described as:
+If the optimizer returns with no error the first actuator values returned. In case of an error, the actual front wheel angle and a throttle of -1 is returned to bring the car into a safe state. The car model can be described as:
 
 ![px += v * std::cos(psi) * dt](https://latex.codecogs.com/gif.latex?px_t_&plus;_1&space;=&space;px_t&space;&plus;&space;v_t&space;*&space;\cos(psi_t)&space;*&space;dt)<br>
 ![py += v * std::sin(psi) * dt](https://latex.codecogs.com/gif.latex?py_t_&plus;_1&space;=&space;py_t&space;&plus;&space;v_t&space;*&space;\sin(psi_t)&space;*&space;dt)<br>
@@ -62,14 +62,14 @@ With the car states: px, py, psi, v (x, y position, vehicle orientation, velocit
 In additon, the cross track error (cte) and the orientation error (epsi) are calculated and added to the vehicle state with following formula:
 
 ![cte0 + (v0 * CppAD::sin(epsi0) * dt](https://latex.codecogs.com/gif.latex?cte_{t&plus;1}&space;=&space;cte_t&space;&plus;&space;v_t&space;\sin(epsi_t)&space;*&space;dt)<br>
-![](https://latex.codecogs.com/gif.latex?epsi_{t&plus;1}&space;=&space;epsi_t&space;-&space;v_t&space;\frac{delta_t}{Lf}&space;dt)
+![](https://latex.codecogs.com/gif.latex?epsi_{t&plus;1}&space;=&space;epsi_t&space;-&space;v_t&space;\frac{steering_t}{Lf}&space;dt)
 
-These terms are used added into a cost function which is used by the optimizer to minimize actuator usage. The cost factor are weighted to emphasize the importance especially of cte, epsi and especially the vehicle orientation. 
+These terms are added into a cost function which is used by the optimizer to minimize actuator usage. The cost factor are weighted to emphasize the importance especially of cte, epsi and especially the vehicle orientation. 
 
 The prediction steps N and the time between the steps dt
 are chosen based on a trade-off between the predicted resolution and length of the prediction.
 Adding a larger N and small dt I could see a better model resolution but 
-at higher computational costs which could lead to worse predictions if the 
+at higher computational costs which lead to worse predictions if the 
 calculations are stopped after the defined time. Setting the estimates too small,
 also did not work as the predictions did turn out not good enough. Finally I choose
 N with 10 and dt as 0.1 ms.
