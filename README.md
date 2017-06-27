@@ -12,7 +12,7 @@ Self-Driving Car Engineer Nanodegree Program
 
 ### Checklist
 - [x] Your code should compile.
-- [ ] The Model description (incl. state, actuators and update equations)
+- [x] The Model description (incl. state, actuators and update equations)
 - [X] Timestep Length and Elapsed Duration (N & dt)
 - [x] Polynomial Fitting and MPC Preprocessing (show and describe)
 - [x] Model Predictive Control with Latency
@@ -20,38 +20,53 @@ Self-Driving Car Engineer Nanodegree Program
 
 ### onMessage
 When receiving data from the simulator, below activities are run:
-![alt text](onMessage.png "onMessage")
 
-Based on the received car position, an estimated position will be calculated.
+![alt text](onMessage.png "onMessage")<br>
+
+Based on the received car data, an estimated data will be calculated to compensate latency.
 It is assumed that the latency is 100ms and below formulas are used to get
-the estimated position, psi and v. For the speed, we estimate that based on the 
-throttle we can estimate the speed after 100ms.
+the estimated position, psi (orientation) and v (vehicle velocity). 
 
 ![px += v * std::cos(psi) * dt](https://latex.codecogs.com/gif.latex?px_t_&plus;_1&space;=&space;px_t&space;&plus;&space;v_t&space;*&space;\cos(psi_t)&space;*&space;dt)<br>
 ![py += v * std::sin(psi) * dt](https://latex.codecogs.com/gif.latex?py_t_&plus;_1&space;=&space;py_t&space;&plus;&space;v_t&space;*&space;\sin(psi_t)&space;*&space;dt)<br>
-![psi -= v * steer_value / params.Lf * dt](https://latex.codecogs.com/gif.latex?psi_{t&plus;1}&space;=&space;psi_t&space;-&space;v_t&space;\frac{steervalue_t}{Lf}dt)<br>
-![v += throttle_value * dt](https://latex.codecogs.com/gif.latex?v_{t&plus;1}&space;=&space;v_t&space;&plus;throttlevalue_t*dt)<br>
+![psi -= v * steer_value / params.Lf * dt](https://latex.codecogs.com/gif.latex?psi_{t&plus;1}&space;=&space;psi_t&space;-&space;v_t&space;\frac{steering_t}{Lf}dt)<br>
+![v += throttle_value * dt](https://latex.codecogs.com/gif.latex?v_{t&plus;1}&space;=&space;v_t&space;&plus;throttle_t*dt)<br>
 
 Using the predicted car position the received waypoints are converted from
-global coordinates to coordinates relative to the car position (with the car 
-position as (0,0)). Below formulas are used to convert:
+global coordinates to coordinates relative to the car position and orientation. Below formulas are used to convert:
 
 ![ptsx[i] = (shift_x * cos(0 - psi) - shift_y * sin(0 - psi))](https://latex.codecogs.com/gif.latex?ptsx_i&space;=&space;(ptsx_i&space;-&space;px_{t&plus;1})&space;\cos(0&space;-&space;psi_{t&plus;1})&space;-&space;(ptsy_i&space;-&space;py_{t&plus;1})&space;\sin(0&space;-&space;psi))<br>
 ![ptsy[i] = (shift_x * sin(0 - psi) + shift_y * cos(0 - psi))](https://latex.codecogs.com/gif.latex?ptsy_i&space;=&space;(ptsx_i&space;-&space;px_{t&plus;1})&space;\sin(0&space;-&space;psi_{t&plus;1})&space;&plus;&space;(ptsy_i&space;-&space;py_{t&plus;1})&space;\cos(0&space;-&space;psi))<br>
 
-The new waypoints are converted into a polynom 3rd order.
-The cross track error and the orientation error are calculated based on the polynom.
+The new waypoints are converted into a polynomial of 3rd order.
+The cross track error and the orientation error are calculated based on the polynomial.
  
 Afterwards it is checked if the car will soon enter a steep curve and based
- on the result the reference speed is set.
+ on the result the reference velocity is set.
  
  
 Using the return values from the MPV solver, the new throttle and orientation is set and
  the predicted waypoints are returned.
 
 ### MPC solve 
-The model predictive control solver is based on a kinematic model and not on a dynamic model.
-N prediction with dt ms between each prediction are performed. The paremeters
+The model predictive control solver is based on a kinematic model. The model with the given bounds and constraints is handed over to an optimizer. The optimzer tries to find the best solution for the given N prediction steps with dt time in between. 
+If the optimizer returns with no error the first actuator values returned. In case of an error, the actual front wheel angle and a throttle of -1 is returned. This is to bring the car into  safe state. The car model can be described as:
+
+![px += v * std::cos(psi) * dt](https://latex.codecogs.com/gif.latex?px_t_&plus;_1&space;=&space;px_t&space;&plus;&space;v_t&space;*&space;\cos(psi_t)&space;*&space;dt)<br>
+![py += v * std::sin(psi) * dt](https://latex.codecogs.com/gif.latex?py_t_&plus;_1&space;=&space;py_t&space;&plus;&space;v_t&space;*&space;\sin(psi_t)&space;*&space;dt)<br>
+![psi -= v * steer_value / params.Lf * dt](https://latex.codecogs.com/gif.latex?psi_{t&plus;1}&space;=&space;psi_t&space;+&space;v_t&space;\frac{steering_t}{Lf}dt)<br>
+![v += throttle_value * dt](https://latex.codecogs.com/gif.latex?v_{t&plus;1}&space;=&space;v_t&space;&plus;throttle_t*dt)<br>
+
+With the car states: px, py, psi, v (x, y position, vehicle orientation, velocity) and the actuators: steering and throttle.
+ 
+In additon, the cross track error (cte) and the orientation error (epsi) are calculated and added to the vehicle state with following formula:
+
+![cte0 + (v0 * CppAD::sin(epsi0) * dt](https://latex.codecogs.com/gif.latex?cte_{t&plus;1}&space;=&space;cte_t&space;&plus;&space;v_t&space;\sin(epsi_t)&space;*&space;dt)<br>
+![](https://latex.codecogs.com/gif.latex?epsi_{t&plus;1}&space;=&space;epsi_t&space;-&space;v_t&space;\frac{delta_t}{Lf}&space;dt)
+
+These terms are used added into a cost function which is used by the optimizer to minimize actuator usage. The cost factor are weighted to emphasize the importance especially of cte, epsi and especially the vehicle orientation. 
+
+The prediction steps N and the time between the steps dt
 are chosen based on a trade-off between the predicted resolution and length of the prediction.
 Adding a larger N and small dt I could see a better model resolution but 
 at higher computational costs which could lead to worse predictions if the 
